@@ -1,0 +1,86 @@
+#!/bin/sh /etc/rc.common
+# rgb-led OpenWRT init script
+# Provides: rgb-led
+# Description: Start/stop the RGB LED sweep binary built from `main.go`
+
+START=90
+STOP=10
+USE_PROCD=1
+
+. /lib/functions.sh
+
+# UCI config file and section
+CONFIG_NAME="rgb-led"
+CONFIG_SECTION="main"
+
+# Path to the compiled Go binary (install to /usr/bin on the router)
+BIN=/usr/bin/rgb-led
+
+# Derived process name from the binary path
+NAME=$(basename "$BIN")
+
+# Defaults
+DEFAULT_RED_LED="red:indicator"
+DEFAULT_GREEN_LED="green:indicator"
+DEFAULT_BLUE_LED="blue:power"
+DEFAULT_STEP="1"
+DEFAULT_DELAY="1000"
+DEFAULT_ENABLED="1"
+
+# Load UCI config (if present) and read options
+config_load "${CONFIG_NAME}"
+config_get UCI_ENABLED "${CONFIG_SECTION}" enabled "${DEFAULT_ENABLED}"
+config_get UCI_RED "${CONFIG_SECTION}" red_led "${DEFAULT_RED_LED}"
+config_get UCI_GREEN "${CONFIG_SECTION}" green_led "${DEFAULT_GREEN_LED}"
+config_get UCI_BLUE "${CONFIG_SECTION}" blue_led "${DEFAULT_BLUE_LED}"
+config_get UCI_STEP "${CONFIG_SECTION}" step "${DEFAULT_STEP}"
+config_get UCI_DELAY "${CONFIG_SECTION}" delay "${DEFAULT_DELAY}"
+
+# Allow environment variables to override UCI; otherwise use UCI or defaults
+ENABLED=${ENABLED:-${UCI_ENABLED:-$DEFAULT_ENABLED}}
+RED_LED=${RED_LED:-${UCI_RED:-$DEFAULT_RED_LED}}
+GREEN_LED=${GREEN_LED:-${UCI_GREEN:-$DEFAULT_GREEN_LED}}
+BLUE_LED=${BLUE_LED:-${UCI_BLUE:-$DEFAULT_BLUE_LED}}
+STEP=${STEP:-${UCI_STEP:-$DEFAULT_STEP}}
+DELAY=${DELAY:-${UCI_DELAY:-$DEFAULT_DELAY}}
+
+start_service() {
+    # Respect enabled flag
+    [ "$ENABLED" = "1" ] || {
+        logger -t "$NAME" "Service disabled (enabled != 1); not starting"
+        return 0
+    }
+
+    [ -x "$BIN" ] || {
+        logger -t "$NAME" "Binary $BIN not found or not executable"
+        return 1
+    }
+
+    procd_open_instance
+    procd_set_param command "$BIN"
+    procd_set_param env RED_LED="$RED_LED"
+    procd_set_param env GREEN_LED="$GREEN_LED"
+    procd_set_param env BLUE_LED="$BLUE_LED"
+    procd_set_param env STEP="$STEP"
+    procd_set_param env DELAY="$DELAY"
+    procd_set_param stdout 1
+    procd_set_param stderr 1
+    procd_set_param respawn
+    procd_close_instance
+}
+
+stop_service() {
+    # procd will stop spawned processes; ensure the process is not left behind
+    if pidof "$NAME" >/dev/null 2>&1; then
+        kill $(pidof "$NAME") >/dev/null 2>&1 || true
+    fi
+}
+
+status_service() {
+    if pidof "$NAME" >/dev/null 2>&1; then
+        echo "$NAME is running"
+        return 0
+    fi
+    echo "$NAME is not running"
+    return 1
+}

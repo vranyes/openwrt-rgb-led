@@ -1,0 +1,7 @@
+config rgb_led 'main'
+    option enabled '1'
+    option red_led 'red:indicator'
+    option green_led 'green:indicator'
+    option blue_led 'blue:power'
+    option step '1'
+    option delay '1000'

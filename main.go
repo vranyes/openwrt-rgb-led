@@ -13,9 +13,9 @@ import (
 const (
 	// Change these to match your router's LED directory names
 	basePath        = "/sys/class/leds"
-	defaultRedLED   = "red:indicator"
-	defaultGreenLED = "green:indicator"
-	defaultBlueLED  = "blue:power"
+	defaultRedLED   = "red:status"
+	defaultGreenLED = "green:status"
+	defaultBlueLED  = "blue:status"
 
 	// Tuning variables
 	defaultStep  = "1"

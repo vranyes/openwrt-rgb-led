@@ -1,42 +1,19 @@
 ---
+archives:
+- formats:
+  - tar.gz
+  id: default
+  ids:
+  - rgb-led
 builds:
-- id: rgb-led
-  main: ./main.go
-  binary: rgb-led
-  env:
-  - CGO_ENABLED=0
-  goos:
-  - linux
+- binary: rgb-led
+  env: [CGO_ENABLED=0]
   goarch:
   - amd64
   - arm64
-  ldflags: -s -w
-
-archives:
-- id: default
-  format: tar.gz
-  builds:
-  - rgb-led
-
-nfpms:
-- id: default
-  formats:
-  - apk
-  # Use Alpine's conventional file naming: name_version_arch.apk (e.g. rgb-led_1.0.0_aarch64.apk)
-  file_name_template: "{{ .PackageName }}_{{ .Version }}_{{ .Arch }}"
-  package_name: rgb-led
-  description: "RGB LED sweep program for OpenWrt devices."
-  maintainer: "Josiah Vranyes"
-  license: GPL-3.0
-  contents:
-  - src: files/etc/init.d/rgb-led
-    dst: /etc/init.d/rgb-led
-    file_info:
-      mode: 755
-  - src: files/etc/config/rgb-led
-    dst: /etc/config/rgb-led
-    file_info:
-      mode: 644
-  apk: {}
-
+  goos: [linux]
+  id: rgb-led
+  ldflags: "-s -w"
+  main: ./main.go
 project_name: rgb-led
+version: 2

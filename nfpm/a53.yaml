@@ -1,0 +1,23 @@
+---
+apk:
+  arch: aarch64_cortex-a53
+arch: arm64
+contents:
+- dst: /usr/bin/rgb-led
+  file_info:
+    mode: 755
+  src: dist/rgb-led_linux_arm64_v8.0/rgb-led
+- dst: /etc/init.d/rgb-led
+  file_info:
+    mode: 755
+  src: files/etc/init.d/rgb-led
+- dst: /etc/config/rgb-led
+  file_info:
+    mode: 644
+  src: files/etc/config/rgb-led
+description: RGB LED sweep program for OpenWrt devices.
+license: GPL-3.0
+maintainer: Josiah Vranyes
+name: rgb-led
+platform: linux
+version: ${VERSION}

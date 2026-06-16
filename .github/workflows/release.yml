@@ -2,6 +2,8 @@
 jobs:
   release:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
     - name: Checkout
       uses: actions/checkout@v6
@@ -39,10 +41,43 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       name: Upload APK packages to release
       run: gh release upload ${{ github.ref_name }} dist/*.apk --clobber
+    - name: Build apk-tools
+      run: |
+        sudo apt-get update && sudo apt-get install -y meson ninja-build libssl-dev zlib1g-dev
+        git clone --depth 1 https://gitlab.alpinelinux.org/alpine/apk-tools.git
+        cd apk-tools
+        meson setup build -Dcrypto_backend=openssl
+        ninja -C build
+        sudo cp build/src/apk /usr/local/bin/
+    - name: Create APK repo
+      env:
+        APK_SIGN_KEY: ${{ secrets.APK_SIGN_KEY }}
+      run: |
+        if [ -z "$APK_SIGN_KEY" ]; then
+          echo "::error::APK_SIGN_KEY secret not set — repo signing will fail"
+          exit 1
+        fi
+        echo "$APK_SIGN_KEY" > /tmp/sign.key
+        for arch in aarch64_cortex-a53 aarch64_cortex-a72 x86_64; do
+          mkdir -p "dist/repo/$arch"
+          shopt -s nullglob
+          pkgs=( dist/rgb-led_*_$arch.apk )
+          if [ ${#pkgs[@]} -eq 0 ]; then
+            echo "::error::No APK packages found for $arch"
+            exit 1
+          fi
+          cp "${pkgs[@]}" "dist/repo/$arch/"
+          (cd "dist/repo/$arch" && apk mkndx --sign /tmp/sign.key --output packages.adb *.apk)
+        done
+        cp keys/rgb-led-repo.pub dist/repo/
+    - name: Deploy APK repo to gh-pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_branch: gh-pages
+        publish_dir: dist/repo
 name: Build and Publish Release
 on:
   push:
     tags:
     - v*
-permissions:
-  contents: write

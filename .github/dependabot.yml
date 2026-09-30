@@ -1,0 +1,39 @@
+# Dependabot configuration
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
+#
+# NOTE: there is deliberately no gomod entry here yet.
+#
+# This repo has no go.mod. main.go imports only the standard library, so
+# there are no module dependencies to track, and Dependabot's gomod
+# ecosystem requires an existing go.mod to attach to -- an entry pointing
+# at a missing manifest just produces a permanent error on every run.
+#
+# After running `go mod init github.com/vranyes/openwrt-rgb-led` and
+# committing the result, add an entry like this:
+#
+#   - package-ecosystem: gomod
+#     directory: "/"
+#     schedule:
+#       interval: weekly
+#       day: monday
+#       time: "09:00"
+#       timezone: America/Chicago
+#     open-pull-requests-limit: 5
+#     labels:
+#       - dependencies
+#     groups:
+#       go-dependencies:
+#         patterns:
+#           - "*"
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/Chicago
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
